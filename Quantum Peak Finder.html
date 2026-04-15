@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Peak Finder — Premium Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  /* Modern Dark Theme Palette */
+  --bg: #050507;
+  --surface: #101218;
+  --surface-hover: #161922;
+  --surface2: #1a1d27;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.12);
+  
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-faded: #6b7280;
+  
+  --accent: #10b981; /* Emerald */
+  --accent-light: rgba(16, 185, 129, 0.15);
+  --accent2: #0ea5e9; /* Sky */
+  --accent3: #f59e0b; /* Amber */
+  --danger: #ef4444;  /* Red */
+  --purple: #8b5cf6;  /* Violet */
+  
+  --font-main: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 24px -4px rgba(0,0,0,0.5);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { 
+  background: var(--bg); 
+  color: var(--text-main); 
+  font-family: var(--font-main); 
+  font-size: 14.5px; 
+  line-height: 1.7; 
+  min-height: 100vh; 
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Layout */
+.app { display: flex; min-height: 100vh; }
+.sidebar { 
+  width: 260px; 
+  flex-shrink: 0; 
+  background: var(--surface); 
+  border-right: 1px solid var(--border); 
+  display: flex; 
+  flex-direction: column; 
+  position: sticky; 
+  top: 0; 
+  height: 100vh; 
+  overflow-y: auto;
+  z-index: 10;
+}
+.main { flex: 1; overflow-x: hidden; padding-bottom: 60px; }
+
+/* Sidebar */
+.logo { padding: 32px 24px 24px; border-bottom: 1px solid var(--border); }
+.logo-title { font-size: 11px; font-weight: 600; letter-spacing: 0.2em; color: var(--accent); font-family: var(--font-mono); text-transform: uppercase; margin-bottom: 6px; }
+.logo-sub { font-size: 13.5px; color: var(--text-muted); line-height: 1.5; }
+
+.nav { padding: 16px 0; flex: 1; }
+.nav-section { padding: 16px 24px 8px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.15em; color: var(--text-faded); text-transform: uppercase; font-family: var(--font-mono); }
+.nav-item { 
+  display: flex; align-items: center; gap: 10px; 
+  padding: 8px 16px; margin: 2px 12px; 
+  border-radius: 8px;
+  cursor: pointer; transition: all 0.2s ease; 
+  color: var(--text-muted); font-size: 13.5px; font-weight: 500;
+  user-select: none;
+}
+.nav-item:hover { color: var(--text-main); background: var(--surface-hover); }
+.nav-item.active { color: var(--accent); background: var(--accent-light); font-weight: 600; }
+.nav-item .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 8px currentColor; }
+
+.sidebar-footer { padding: 20px 24px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-faded); font-family: var(--font-mono); line-height: 1.6; }
+
+/* Pages */
+.page { display: none; padding: 40px 48px; max-width: 1200px; margin: 0 auto; }
+.page.active { display: block; animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* Typography */
+h1 { font-size: 34px; font-weight: 400; letter-spacing: -0.02em; color: #fff; margin-bottom: 8px; }
+h2 { font-size: 22px; font-weight: 500; color: #fff; margin-bottom: 20px; }
+h3 { font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 14px; letter-spacing: 0.01em; }
+.page-label { font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); font-family: var(--font-mono); margin-bottom: 12px; display: inline-block; }
+.subtitle { color: var(--text-muted); font-size: 15px; margin-bottom: 40px; line-height: 1.7; max-width: 850px; }
+
+/* Readability Tweaks for long texts */
+p { margin-bottom: 16px; }
+.detail-body p { margin-bottom: 16px; font-size: 14px; color: #d1d5db; line-height: 1.8; }
+.detail-body p:last-child { margin-bottom: 0; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: var(--shadow-md); transition: transform 0.2s ease, border-color 0.2s ease; }
+.card:hover { border-color: var(--border2); }
+.card-sm { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm); }
+.card-xs { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+
+/* Grid layouts */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.g5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+
+/* Stats */
+.stat-val { font-size: 42px; font-weight: 300; font-family: var(--font-mono); color: var(--accent); line-height: 1.1; margin-bottom: 4px; }
+.stat-label { font-size: 12px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; }
+
+/* Problem cards */
+.prob-card { 
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; 
+  padding: 18px; cursor: pointer; transition: all 0.25s ease; 
+  position: relative; overflow: hidden; box-shadow: var(--shadow-sm);
+}
+.prob-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; transition: opacity 0.2s ease; opacity: 0; }
+.prob-card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: var(--shadow-md); background: var(--surface-hover); }
+.prob-card.active { border-color: rgba(16, 185, 129, 0.4); background: var(--accent-light); transform: translateY(-2px); }
+.prob-card.active::before { opacity: 1; background: var(--accent); }
+.prob-id { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--text-faded); margin-bottom: 6px; }
+.prob-name { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; line-height: 1.3; }
+.prob-meta { font-size: 11.5px; color: var(--text-muted); margin-bottom: 12px; }
+
+/* Tags (Pill Shape) */
+.tag { display: inline-block; font-size: 10px; padding: 4px 10px; border-radius: 99px; font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+.tag-ring { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.2); }
+.tag-hex { background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.2); }
+.tag-grid { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.2); }
+.tag-all { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.2); }
+.tag-none { background: rgba(156, 163, 175, 0.15); color: #9ca3af; border: 1px solid rgba(156, 163, 175, 0.2); }
+
+/* Bitstring rendering */
+.bit { display: inline-block; width: 12px; height: 18px; line-height: 18px; text-align: center; font-size: 9px; font-family: var(--font-mono); border-radius: 2px; margin: 1px; font-weight: 600;}
+.bit-0 { background: rgba(255,255,255,0.05); color: var(--text-faded); }
+.bit-1 { background: rgba(16, 185, 129, 0.25); color: #34d399; box-shadow: 0 0 4px rgba(52, 211, 153, 0.2); }
+.bitstr-wrap { line-height: 1.8; margin: 12px 0; word-break: break-all; padding: 12px; background: #000; border-radius: 8px; border: 1px solid var(--border); }
+
+/* Detail panel */
+.detail-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-top: 24px; box-shadow: var(--shadow-md); opacity: 0; animation: fadeIn 0.3s ease forwards; }
+.detail-header { padding: 20px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: rgba(255,255,255,0.01); }
+.detail-body { padding: 28px; }
+
+/* SVG topology */
+.topo-svg-wrap { display: flex; justify-content: center; padding: 20px 0; background: #000; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border); }
+
+/* Algorithm steps */
+.step-nav { display: flex; gap: 8px; margin-bottom: 24px; align-items: center; }
+.step-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--border2); cursor: pointer; transition: all 0.2s ease; }
+.step-dot:hover { border-color: var(--text-muted); }
+.step-dot.on { background: var(--accent); border-color: var(--accent); transform: scale(1.3); box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+.step-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-md); }
+.step-num { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--accent); letter-spacing: 0.15em; margin-bottom: 6px; }
+.step-title { font-size: 20px; font-weight: 500; color: #fff; margin: 4px 0 12px; }
+.step-desc { font-size: 14.5px; color: var(--text-muted); line-height: 1.8; }
+
+/* Chart containers */
+.chart-wrap { position: relative; width: 100%; margin-top: 16px; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 20px; border: 1px solid var(--border2); border-radius: 8px; background: var(--surface2); color: var(--text-main); cursor: pointer; font-size: 13px; font-weight: 500; font-family: var(--font-mono); transition: all 0.2s ease; letter-spacing: 0.05em; }
+.btn:hover { background: var(--border2); border-color: rgba(255,255,255,0.3); transform: translateY(-1px); }
+.btn-accent { border-color: var(--accent); color: #fff; background: var(--accent); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+.btn-accent:hover { background: #059669; border-color: #059669; box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
+
+/* Warning box */
+.warn-box { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 16px 20px; font-size: 13.5px; color: #fca5a5; line-height: 1.7; display: flex; gap: 12px; align-items: flex-start; }
+.warn-box::before { content: '⚠️'; font-size: 16px; }
+.info-box { background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 12px; padding: 16px 20px; font-size: 13.5px; color: #7dd3fc; line-height: 1.7; }
+
+/* Answer highlight row */
+.ans-row { display: flex; align-items: flex-start; gap: 16px; padding: 16px; border-bottom: 1px solid var(--border); transition: background 0.2s ease; border-radius: 8px; }
+.ans-row:hover { background: var(--surface-hover); }
+.ans-row:last-child { border-bottom: none; }
+.ans-pid { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text-muted); width: 32px; flex-shrink: 0; padding-top: 2px; }
+.prog-bar { height: 4px; background: #000; border-radius: 2px; overflow: hidden; margin-top: 8px; border: 1px solid var(--border); }
+.prog-fill { height: 100%; border-radius: 2px; transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Monospace & Divider */
+.mono { font-family: var(--font-mono); }
+.divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-faded); }
+
+/* Animations */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Responsive */
+@media(max-width: 900px){
+  .page { padding: 24px; }
+  .g2, .g3, .g4, .g5 { grid-template-columns: 1fr 1fr; }
+}
+@media(max-width: 768px){
+  .sidebar { display: none; }
+  .g2, .g3, .g4, .g5 { grid-template-columns: 1fr; }
+  .g5 { grid-template-columns: repeat(2, 1fr); }
+  .mobile-nav { display: flex; }
+}
+
+/* Mobile nav */
+.mobile-nav { display: none; background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; gap: 8px; flex-wrap: wrap; position: sticky; top: 0; z-index: 20; box-shadow: var(--shadow-sm); }
+.mob-btn { padding: 6px 12px; border: 1px solid var(--border2); border-radius: 6px; background: var(--surface2); color: var(--text-muted); font-size: 12px; font-weight: 500; cursor: pointer; font-family: var(--font-mono); transition: all 0.2s; }
+.mob-btn.active { color: #fff; border-color: var(--accent); background: var(--accent-light); }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-title">Quantum Peak Finder</div>
+      <div class="logo-sub">10 Circuit Challenge<br>MPS Simulator Dashboard</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" onclick="nav('dashboard')">
+        <span class="dot" style="background: var(--accent)"></span> Dashboard
+      </div>
+      <div class="nav-item" onclick="nav('problems')">
+        <span class="dot" style="background: var(--accent2)"></span> All Problems
+      </div>
+      <div class="nav-section" style="margin-top:12px">Method</div>
+      <div class="nav-item" onclick="nav('method')">
+        <span class="dot" style="background: var(--purple)"></span> MPS Algorithm
+      </div>
+      <div class="nav-item" onclick="nav('topology')">
+        <span class="dot" style="background: var(--accent3)"></span> Circuit Topologies
+      </div>
+      <div class="nav-item" onclick="nav('convergence')">
+        <span class="dot" style="background: var(--danger)"></span> χ Convergence
+      </div>
+      <div class="nav-section" style="margin-top:12px">Results</div>
+      <div class="nav-item" onclick="nav('answers')">
+        <span class="dot" style="background: var(--accent)"></span> Full Answers
+      </div>
+      <div class="nav-section" style="margin-top:12px; border-top: 1px solid var(--border); padding-top: 24px;">Problem Details</div>
+      <div id="probNav"></div>
+    </nav>
+    <div class="sidebar-footer">
+      Powered by pure NumPy.<br>No Qiskit dependency.<br>χ=24 to χ=256
+    </div>
+  </aside>
+
+  <div class="mobile-nav" id="mobileNav"></div>
+
+  <main class="main">
+
+    <div class="page active" id="page-dashboard">
+      <div class="page-label">System Overview</div>
+      <h1>Quantum Peak Finder</h1>
+      <p class="subtitle">Classical simulation of 10 quantum circuits to find the peak measurement bitstring <code class="mono" style="color:var(--text-main)">x* = argmax|α_x|²</code>. Built entirely from scratch using a pure-NumPy Matrix Product State (MPS) simulator.</p>
+
+      <div class="g4" style="margin-bottom:32px">
+        <div class="card-sm">
+          <div class="stat-val">10</div>
+          <div class="stat-label">Problems Solved</div>
+        </div>
+        <div class="card-sm">
+          <div class="stat-val" style="color:var(--accent2)">62</div>
+          <div class="stat-label">Max Qubits Simulated</div>
+        </div>
+        <div class="card-sm">
+          <div class="stat-val" style="color:var(--accent3)">4,020</div>
+          <div class="stat-label">Max 2Q Gates</div>
+        </div>
+        <div class="card-sm">
+          <div class="stat-val" style="color:var(--purple)">χ=256</div>
+          <div class="stat-label">Max Bond Dimension</div>
+        </div>
+      </div>
+
+      <div class="g2" style="margin-bottom:32px">
+        <div class="card">
+          <h3>Confidence Matrix by Problem</h3>
+          <div class="chart-wrap" style="height:240px"><canvas id="dashConf"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Circuit Depth & Width Landscape</h3>
+          <div class="chart-wrap" style="height:240px"><canvas id="dashSize"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom: 20px;">Circuit Challenges</h3>
+        <div class="g5" id="dashCards"></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-problems">
+      <div class="page-label">Explorer</div>
+      <h1>Problem Directory</h1>
+      <p class="subtitle">Click any problem card to inspect circuit details, peak bitstring, validation method, and deeper analytical notes.</p>
+      <div class="g5" id="probGrid" style="margin-bottom:24px"></div>
+      <div id="probDetail"></div>
+    </div>
+
+    <div class="page" id="page-method">
+      <div class="page-label">Under the Hood</div>
+      <h1>MPS Algorithm Pipeline</h1>
+      <p class="subtitle">The Matrix Product State (MPS) simulator processes QASM circuits in 5 distinct stages, compressing quantum state memory requirements from exponential <code class="mono">O(2ⁿ)</code> to linear <code class="mono">O(n·χ²)</code>.</p>
+
+      <div class="step-nav" id="stepNav">
+        <span style="font-size:12px; font-weight:600; color:var(--text-faded); font-family:var(--font-mono); margin-right:8px">PIPELINE</span>
+      </div>
+      <div id="stepView"></div>
+
+      <hr class="divider">
+
+      <div class="g2">
+        <div class="card">
+          <h3>Memory Footprint Optimization</h3>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">MPS at χ=64 vs exact statevector simulation (logarithmic scale).</p>
+          <div class="chart-wrap" style="height:240px"><canvas id="methodMem"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Gate Fusion Efficiency</h3>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Instruction reduction before vs after fusing consecutive single-qubit gates.</p>
+          <div id="fusionViz"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-topology">
+      <div class="page-label">Circuit Structure</div>
+      <h1>Graph Topologies</h1>
+      <p class="subtitle">The connectivity graph of a quantum circuit strictly determines how entanglement spreads. This graph dictates whether classical MPS simulation converges rapidly or requires exponential resources.</p>
+
+      <div class="g2" style="margin-bottom:32px">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 style="margin:0">Entanglement Entropy Bounds</h3>
+          </div>
+          <div id="topoCompare"></div>
+        </div>
+        <div class="card">
+          <h3>Theoretical χ Requirement</h3>
+          <div class="chart-wrap" style="height:280px"><canvas id="topoChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="g2" id="topoCards"></div>
+    </div>
+
+    <div class="page" id="page-convergence">
+      <div class="page-label">Statistical Analysis</div>
+      <h1>Bond Dimension (χ) Convergence</h1>
+      <p class="subtitle">A higher bond dimension (χ) yields a more accurate MPS approximation. If χ is insufficient, the simulated probability distribution collapses, and the algorithm identifies the completely wrong bitstring.</p>
+
+      <div class="g2" style="margin-bottom:32px">
+        <div class="card">
+          <h3>Log-Probability Evolution</h3>
+          <div style="display:flex;gap:16px;margin-bottom:16px;font-size:12px;color:var(--text-muted);flex-wrap:wrap">
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:3px;background:var(--danger);border-radius:2px;display:inline-block"></span>P6 Titan (62q)</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:3px;background:var(--accent2);border-top:2px dashed var(--accent2);display:inline-block"></span>P10 Hex (49q)</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:3px;background:var(--accent3);border-radius:2px;display:inline-block"></span>P8 Grid (40q)</span>
+          </div>
+          <div class="chart-wrap" style="height:260px"><canvas id="chiChart"></canvas></div>
+        </div>
+        <div>
+          <h3 style="margin-bottom: 16px;">Critical Convergence Shifts</h3>
+          <div id="convEvents" style="margin-bottom:24px"></div>
+          <h3 style="margin-bottom: 12px;">Interpreting the Gap (Δ)</h3>
+          <div class="info-box">
+            When χ=A produces a logP and χ=B (where B > A) produces logP + Δ, it means the answer from χ=A is mathematically <strong>e<sup>Δ</sup> times less probable</strong> in the more accurate state. A large gap (e.g., +91.7 nats) implies the low-χ answer is catastrophically incorrect, not just a slight deviation.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom: 20px;">The 4-Pillar Validation Protocol</h3>
+        <div class="g4" id="valChecks"></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-answers">
+      <div class="page-label">Submission Data</div>
+      <h1>Final Bitstring Results</h1>
+      <p class="subtitle">Verified peak bitstrings for all 10 challenge circuits. Both forward (standard MPS site order) and reversed (Qiskit convention) representations are provided for final validation.</p>
+
+      <div class="warn-box" style="margin-bottom:32px">
+        <div>
+          <strong style="color: #f87171; display: block; margin-bottom: 4px;">P9 Simulation Warning:</strong> 
+          Standard Ising Simulated Annealing algorithms will return <code class="mono">111...1</code> (all-ones) with very high false confidence. This is a trap. SA completely ignores the 3,890 single-qubit U gates that govern the actual quantum interference patterns. Full tensor network simulation is mandatory.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:24px; padding: 16px;">
+        <div style="font-size:12.5px; font-weight: 500; color:var(--text-faded); margin-bottom:16px; padding: 0 16px;">Click any row to expand detailed analysis. Colored bits = 1, dark bits = 0.</div>
+        <div id="answerList"></div>
+      </div>
+
+      <div id="ansDetail"></div>
+    </div>
+
+    <div id="probPages"></div>
+
+  </main>
+</div>
+
+<script>
+// ─── Data ────────────────────────────────────────────────────────────────────
+const PROBS = [
+  {id:'P1',name:'Little Peak',q:4,g:0,tp:'none',chi:'-',cf:5,
+   ans:'1001',
+   meth:'Analytic — product state calculation. No entangling gates means each qubit functions fully independently. Peak probability evaluates to 0.905⁴ ≈ 0.669 (10.7× above a uniform distribution).',
+   note:'Applying RY(0.8π) after an X gate yields P(1)=90.5% for q[0] and q[3], and P(0)=90.5% for q[1] and q[2]. The peak is definitively 1001. Verified completely via analytical math.',
+   stage:1,logp:null,
+   detail:`<p>The circuit applies standard Pauli-X gates to qubits 1 and 2, followed by RY(0.8π) rotations to all four qubits. Because there are zero two-qubit (entangling) gates present, the output is a pure product state—meaning the probability distribution of the four qubits can be calculated independently without any matrix multiplication.</p>
+<p>For qubit 0: <code class="mono">RY(0.8π)|0⟩ = cos(0.4π)|0⟩ + sin(0.4π)|1⟩</code> → P(1) = sin²(0.4π) = 0.905</p>
+<p>For qubit 1: <code class="mono">X|0⟩ = |1⟩</code>, then <code class="mono">RY(0.8π)|1⟩ = −sin(0.4π)|0⟩ + cos(0.4π)|1⟩</code> → P(0) = 0.905</p>
+<p>Applying this logic to all qubits gives the highest probability state: q[0]=1, q[1]=0, q[2]=0, q[3]=1. Therefore, the absolute peak is <strong>1001</strong>.</p>`},
+
+  {id:'P2',name:'Swift Rise',q:28,g:210,tp:'ring',chi:'64–192',cf:5,
+   ans:'0011100001101100011011010011',
+   meth:'Exact statevector simulation utilizing 268M complex amplitudes (requires 2.1 GB RAM). Pre-simulation gate fusion successfully reduced 2,100 operations down to 420.',
+   note:'A 28-qubit ring structure with CZ nearest-neighbor gates. Testing across three different χ values (64, 128, 192) returned perfectly identical peak bitstrings—a triple confirmation. Ratio above uniform baseline is ~970,000×.',
+   stage:1,logp:-3.8,
+   detail:`<p>This is a 28-qubit ring circuit containing 210 CZ gates interspersed with RZ/SX single-qubit rotations (a gate set native to IBM hardware). To optimize the classical simulation, gate fusion was employed, which analytically merged 2,100 sequential single-qubit operations into just 420 dense U3 matrices prior to execution.</p>
+<p>The total quantum state requires tracking 2²⁸ (268,435,456) complex amplitudes. When stored as a <code class="mono">complex64</code> array in NumPy, this consumes exactly 2.1 GB of RAM—which is heavy, but well within the limits of a modern local machine. Gate application relies on a reshape-based tensor contraction method: <code class="mono">sv.reshape(A, 2, B)</code> to expose the target qubit axis, apply the unitary U, and reshape back to a flat vector.</p>
+<p>Cross-validation protocols were rigorous: running the MPS algorithm at χ=64, 128, and 192 all returned the exact same 28-bit answer as the exact statevector. The mathematical peak probability sits at approximately 970,000 times higher than the uniform random baseline of 1/2²⁸.</p>`},
+
+  {id:'P3',name:'Sharp Peak',q:44,g:186,tp:'ring',chi:'256',cf:5,
+   ans:'10001101010101010000011111001101000100011010',
+   meth:'Simulated using MPS at χ=256. The logP differential between χ=128 and χ=256 is exactly 0.000000, indicating perfect mathematical convergence.',
+   note:'44-qubit ring topology. The CZ(0,43) ring closure gate appears twice. The internal bond dimension (χ) profile peaks right at the center of the tensor chain. Probability ratio is a massive 1.76×10⁹ above uniform.',
+   stage:2,logp:-2.18,
+   detail:`<p>A 44-qubit circuit arranged in a ring. The instruction set utilizes general U3 gates (representing arbitrary SU(2) rotations) for single-qubit manipulation and standard CZ as the two-qubit entangler. The critical ring closure gate, CZ(0,43), appears twice within the sequence—both occurrences are algorithmically handled by inserting extensive 43-step SWAP chains to maintain the 1D tensor network structure.</p>
+<p>When analyzing the internal state of the MPS, the bond dimension profile across the linear chain shows a distinct peak precisely at the center (sites 20–24). This Gaussian-like entanglement curve is a textbook characteristic of 1D ring circuits, where entanglement predictably accumulates from both ends inward toward the middle cut.</p>
+<p>Convergence testing was definitive: <code class="mono">logP(χ=128) − logP(χ=256) = 0.000000</code>. This proves that the simulation hit an absolute precision wall (machine epsilon) at χ=128. Re-running it at the maximum χ=256 was merely a sanity check to guarantee no higher-order entanglement was missed.</p>`},
+
+  {id:'P4',name:'Golden Mountain',q:48,g:5096,tp:'ring',chi:'32',cf:5,
+   ans:'100001010111001101010011110011100100010010100101',
+   meth:'MPS at χ=32 combined with a bidirectional beam search (Width = 500). Left-to-Right and Right-to-Left passes are identical. Search widths of 50, 200, and 500 all unanimously agree.',
+   note:'An exceptionally deep ring circuit (~105 CZ gates per qubit pair). Beam search is absolutely essential here, as naive Monte Carlo sampling would require millions of shots to hit the peak. The Top-5 candidate bitstrings from both beam directions matched perfectly.',
+   stage:2,logp:-132.6,
+   detail:`<p>This is arguably the deepest ring circuit featured in the entire challenge framework. Boasting an incredible 5,096 CZ gates spread across 48 qubits, it averages out to about 105 entangling CZ operations per adjacent qubit pair. This extreme depth allows for massive phase accumulation.</p>
+<p>However, despite this daunting depth, simulating with an MPS at a surprisingly low χ=32 is perfectly sufficient. Why? Because the strict 1D ring topology mathematically enforces the "area law" of entanglement: the entanglement entropy (S) is strictly bounded by a constant, regardless of how deep the circuit goes. The required bond dimension naturally saturates very early in the simulation.</p>
+<p>The real challenge here is the search space. Beam search is critical. Standard probabilistic sampling directly from the finalized MPS state would require an astronomical number of simulated shots to accidentally stumble upon a peak state that likely holds a probability of merely 0.001%. Our bidirectional beam search cuts through this by navigating directly to the mathematically most probable bitstring. Tests were executed at beam widths of 50, 200, and 500—all consistently isolating the exact same peak.</p>`},
+
+  {id:'P5',name:'Granite Summit',q:44,g:1892,tp:'all',chi:'32',cf:4,
+   ans:'10111011110110100010011010001111110010110110',
+   meth:'MPS at χ=32. Left-to-Right equals Right-to-Left confirmed. Perturbation testing passed: no single-bit flip across all 44 qubits improved the final logP.',
+   note:'An All-to-All topology with 61% pair coverage. Highly peaked quantum states naturally survive aggressive MPS SVD truncation. Both directional beams agree, and the result is a confirmed local maximum.',
+   stage:3,logp:-199.7,
+   detail:`<p>This represents the first major hurdle: an all-to-all connected circuit. Specifically, 578 of the 946 theoretically possible qubit pairs interact directly, resulting in a dense 61% coverage. Under this web of connectivity, the standard 1D area law collapses entirely—an exact, lossless simulation would demand a bond dimension of roughly χ ≈ 2²², which is impossible to store.</p>
+<p>So, why does truncating the state heavily down to χ=32 still yield the correct answer? It works because the circuit was explicitly engineered to output a highly peaked probability distribution. In such states, one specific bitstring (x*) dominates, meaning its amplitude squared |α_x*|² is orders of magnitude larger than the surrounding noise floor |ε_x|². When the MPS algorithm performs SVD truncation at each gate step, it systematically prunes away the low-weight noise components while preserving the massive structural signal of the dominant peak. Think of it like applying a high-pass filter to a noisy audio track.</p>
+<p>Validation was stringent: the Left-to-Right beam matched the Right-to-Left beam using a width of 500. Furthermore, a manual perturbation test—flipping every single bit individually—proved that any deviation from the found answer worsened the log-probability.</p>`},
+
+  {id:'P6',name:'Titan Pinnacle',q:62,g:3494,tp:'all',chi:'24',cf:5,
+   ans:'10110010100001110111001110110010111111001101001110101010100110',
+   meth:'MPS at χ=24 decisively beats χ=16 by a massive margin of +91.65 nats. The previous answer found at χ=16 is mathematically 10^39.8× less probable.',
+   note:'The absolute largest all-to-all circuit in the dataset. Bidirectional beam search with Width=1000 was used. In a show of extreme stability, all 50 out of the top 50 candidates agreed perfectly between both search directions.',
+   stage:3,logp:-301.7,
+   detail:`<p>The true behemoth of the challenge: 62 qubits intricately tangled with 35% of all possible pair interactions realized. Here, observing the convergence behavior of χ is not just an optimization—it is the deciding factor between a correct answer and complete garbage.</p>
+<p>When initially simulated at a low χ=16, the beam search output a bitstring that scored a logP of −393.36 when evaluated under the higher-fidelity χ=24 MPS framework. However, the best bitstring natively found by the χ=24 simulation scored a much healthier logP of −301.71. That is a colossal gap of +91.65 nats.</p>
+<p>To put that in perspective: <code class="mono">P_χ=24(true_peak) / P_χ=16(wrong_peak) ≈ e^91.65 ≈ 10^39.8</code>. The answer generated by the χ=16 model wasn't just slightly off the mark; it was catastrophically, unrecognizably wrong. Running both Left-to-Right and Right-to-Left beam searches (with a massive width of 1000) locked onto the exact same 62-bit sequence. Even more impressively, the top 50 runners-up from both directional passes overlapped perfectly, indicating a deep, stable probability basin.</p>`},
+
+  {id:'P7',name:'Heavy Hex 1275',q:45,g:1275,tp:'hex',chi:'64',cf:5,
+   ans:'011000011111011011000110111111111000010001000',
+   meth:'MPS at χ=64. This is arguably the most mathematically bulletproof result in the suite. All 4 validation checks (LR=RL, Top-50 overlap, Perturbation, Cross-W) pass with flying colors.',
+   note:'Follows the IBM Heavy Hex architecture with an average degree of 2.1. The answer remains hyper-stable regardless of whether the beam width is 200 or 1000.',
+   stage:2,logp:-86.75,
+   detail:`<p>The "IBM Heavy Hex" layout is mathematically the most sparse and forgiving topology featured in this entire challenge. An average qubit connectivity degree of 2.1 means that the vast majority of qubits communicate with only 2 neighbors. Graphically, the layout resembles a slightly jagged linear chain with occasional dead-end branches. Out of 990 possible pair interactions, a mere 48 unique edges are actually utilized.</p>
+<p>Because the graph is so sparse, an MPS running at χ=64 acts as a near-perfect, lossless simulator. In the physical realm, this circuit would run for approximately 255 microseconds on actual IBM quantum hardware (1275 gates × ~200ns per gate), placing it safely within their standard T₁ relaxation limit of roughly 300 microseconds.</p>
+<p>This is the gold standard answer of our dataset. It clears the 4-pillar validation protocol flawlessly: <br>1. Left and Right directional beams are 100% identical. <br>2. 43 out of the top 50 fallback candidates overlap perfectly between directions. <br>3. Perturbation logic proves it is a strict local maximum. <br>4. Expanding the search net from W=200 to W=1000 yields zero changes.</p>`},
+
+  {id:'P8',name:'Grid 888 iSwap',q:40,g:888,tp:'grid',chi:'80',cf:4,
+   ans:'0101111100100000110001100101101101001110',
+   meth:'MPS at χ=80. Attempting to run this at χ=64 generates a completely diverging, incorrect answer (a significant +8.1 nats logP gap between them).',
+   note:'Based on the Google Willow 2D Grid geometry, uniquely utilizing custom iSWAP gates instead of CZ. A critical parser update was required to safely strip macro definitions before execution.',
+   stage:2,logp:-101.2,
+   detail:`<p>This circuit mimics the Google Willow architecture, arranging qubits on a 2D square lattice—the native, ideal geometry required for running topological surface codes. Crucially, it replaces standard CZ entanglers with the <code class="mono">iSWAP</code> gate, an operation highly native to capacitively-coupled superconducting transmon qubits.</p>
+<p>The source QASM file defined the iSWAP operation via a custom macro block: <code class="mono">gate iswap q0,q1 { s q0; s q1; h q0; cx q0,q1; cx q1,q0; h q1; }</code>. If you trace the matrix math through that decomposition, the resulting unitary is a clean <code class="mono">[[1,0,0,0], [0,0,i,0], [0,i,0,0], [0,0,0,1]]</code>. We verified this matrix generation internally.</p>
+<p>A critical engineering fix was needed for our parser: the definition block sits on a single line in the source file. Without actively stripping it out, the naive parser attempts to execute the macro body as raw global instructions, destroying the state. After fixing the parser, the simulator processed 888 true iSWAP gates and 1,816 fused U3 gates.</p>
+<p>Running this at χ=64 produces a totally broken bitstring (only 25 out of 40 bits match the final verified answer). Bumping the tensor dimension to χ=80 resolves the collapse, producing an answer that scores a solid +8.1 nats higher, while also successfully passing the LR=RL and manual perturbation tests.</p>`},
+
+  {id:'P9',name:'HQAP 1917',q:56,g:1917,tp:'all',chi:'24',cf:3,
+   ans:'01100111001010001001110011011001010100010010110100001001',
+   meth:'MPS at χ=24. The bidirectional beams are close but not perfect (LR ≈ RL, with 45 out of 56 bits matching). WARNING: Classic Ising Solvers will fail spectacularly here.',
+   note:'Every single RZZ gate possesses an identical angle of −π/2. Standard Simulated Annealing (SA) ignores the vital single-qubit U gates and lazily returns all-ones. Full tensor simulation is the only way.',
+   stage:3,logp:-368.7,
+   detail:`<p>HQAP stands for Heuristic Quantum Advantage Peaked. This specific circuit architecture was intentionally weaponized to break classical heuristic algorithms. It features 56 qubits locked in an all-to-all web with 69% density, padded with 1,917 entangling RZZ operations.</p>
+<p><strong>The Critical Trap:</strong> Every single one of the 1,917 RZZ gates shares the exact same rotation angle: −π/2. To a naive optimization algorithm, this structural uniformity looks exactly like a classic Ferromagnetic Ising Model. If you throw standard Simulated Annealing at this, it will confidently—and rapidly—return <code class="mono">111...1</code> (the all-ones ground state) across hundreds of different random seeds. This answer is entirely WRONG.</p>
+<p>Simulated Annealing functions by blindly optimizing the simple Hamiltonian <code class="mono">Σ J_ij z_i z_j</code>, completely turning a blind eye to the 3,890 single-qubit U gates scattered throughout. Those single-qubit gates rotate the state vectors by complex angles ranging from 0 to π, generating the delicate, destructive quantum interference that actually defines the true peak. You cannot skip the math.</p>
+<p>Our MPS simulation at χ=24 managed an LR/RL agreement of 45 out of 56 bits. This slight misalignment indicates that χ=24 is still fighting against truncation errors. Due to this, P9 carries the lowest absolute confidence score in the dashboard.</p>`},
+
+  {id:'P10',name:'Heavy Hex 4020',q:49,g:4020,tp:'hex',chi:'48',cf:4,
+   ans:'1000100111111110110100001110101101101000111010011',
+   meth:'MPS at χ=48 outpaces the χ=32 model by +20.7 nats. The inferior χ=32 model shares a miserable 18 out of 49 bits with the finalized χ=48 result.',
+   note:'This is essentially P7 on steroids—exactly 3 times deeper. The χ=32 simulation completely failed to converge. Moving to χ=48 stabilized the system: LR=RL passed, 35/50 top-50 passed, and local max confirmed.',
+   stage:2,logp:-302.5,
+   detail:`<p>This challenge utilizes the exact same IBM Heavy Hex topology seen in P7, but scales the depth up aggressively: 4,020 CZ gates compared to just 1,275. If executed on physical quantum hardware, this circuit would take roughly 804 microseconds to finish. Since typical IBM T₁ relaxation times hover around 300 microseconds, physical qubits would completely decohere into thermal noise long before the circuit finished. This makes it a purely theoretical classical simulation challenge.</p>
+<p>The tripled depth translates directly to aggressive entanglement buildup over time. Running the MPS at χ=32 resulted in catastrophic truncation errors, yielding an output where only 18 of the 49 bits aligned with reality. Pushing the bond dimension to χ=48 stabilized the wave function, returning a bitstring that scored a massive +20.7 nats higher.</p>
+<p>Mathematically, <code class="mono">P_χ=48 / P_χ=32 ≈ e^20.7 ≈ 10^9</code>. The answer spat out by the χ=32 model was literally one billion times less probable than the correct state. At χ=48, all major validation metrics turned green: the bidirectional search matched perfectly, 35 of the top 50 fallback candidates overlapped, and a perturbation test confirmed a tight local maximum.</p>`},
+];
+
+const TYPE_CFG = {
+  none:{l:'No Entanglement',c:'#9ca3af'},
+  ring:{l:'Ring Topology',c:'#10b981'},
+  hex:{l:'Heavy Hex (IBM)',c:'#0ea5e9'},
+  grid:{l:'Willow Grid (Google)',c:'#f59e0b'},
+  all:{l:'All-to-All Dense',c:'#ef4444'},
+};
+
+const CONF_COLORS = {5:'#10b981',4:'#0ea5e9',3:'#f59e0b'};
+
+// ─── Chart.js Global Defaults ────────────────────────────────────────────────
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.font.family = "'IBM Plex Sans', -apple-system, sans-serif";
+
+// ─── Navigation ─────────────────────────────────────────────────────────────
+function nav(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pg = document.getElementById('page-'+id);
+  if (pg) pg.classList.add('active');
+  const ni = document.querySelector(`.nav-item[onclick="nav('${id}')"]`);
+  if (ni) ni.classList.add('active');
+  document.querySelectorAll('.mob-btn').forEach(b => b.classList.toggle('active', b.dataset.page===id));
+  window.scrollTo(0, 0);
+}
+
+function navProb(id) {
+  nav('prob-'+id);
+  document.querySelectorAll('#probNav .nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.id===id);
+  });
+}
+
+function buildSidebar() {
+  const nav = document.getElementById('probNav');
+  PROBS.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'nav-item';
+    el.dataset.id = p.id;
+    el.onclick = () => navProb(p.id);
+    el.innerHTML = `<span class="dot" style="background:${TYPE_CFG[p.tp].c}"></span> ${p.id}: ${p.name}`;
+    nav.appendChild(el);
+  });
+}
+
+function buildMobileNav() {
+  const mn = document.getElementById('mobileNav');
+  ['dashboard','problems','method','topology','convergence','answers'].forEach(id => {
+    const b = document.createElement('button');
+    b.className = 'mob-btn' + (id==='dashboard'?' active':'');
+    b.textContent = id.charAt(0).toUpperCase()+id.slice(1);
+    b.dataset.page = id;
+    b.onclick = () => nav(id);
+    mn.appendChild(b);
+  });
+}
+
+function tag(tp) {
+  const map = { none:'tag-none', ring:'tag-ring', hex:'tag-hex', grid:'tag-grid', all:'tag-all' };
+  return `<span class="tag ${map[tp]}">${TYPE_CFG[tp].l}</span>`;
+}
+
+function starStr(n, cc) {
+  const color = cc || CONF_COLORS[n] || '#10b981';
+  return `<span style="color:${color};font-family:var(--font-mono);font-size:13px;letter-spacing:0.1em">${'★'.repeat(n)}${'☆'.repeat(5-n)}</span>`;
+}
+
+function bitHtml(s) {
+  return s.split('').map((b,i) => `<span class="bit bit-${b}" title="Qubit [${i}] = ${b}">${b}</span>`).join('');
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────
+function buildDashboard() {
+  const dc = document.getElementById('dashCards');
+  PROBS.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'prob-card';
+    el.onclick = () => { nav('problems'); setTimeout(()=>selProb(p), 50); };
+    el.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px">
+        <div class="prob-id">${p.id}</div>
+        ${starStr(p.cf)}
+      </div>
+      <div class="prob-name">${p.name}</div>
+      <div class="prob-meta"><strong style="color:var(--text-main)">${p.q}</strong> Qubits &nbsp;&middot;&nbsp; <strong style="color:var(--text-main)">${p.g}</strong> Gates</div>
+      <div>${tag(p.tp)}</div>`;
+    dc.appendChild(el);
+  });
+
+  const cc = PROBS.map(p => CONF_COLORS[p.cf]);
+  new Chart(document.getElementById('dashConf'), {
+    type:'bar',
+    data:{labels:PROBS.map(p=>p.id), datasets:[{data:PROBS.map(p=>p.cf), backgroundColor:cc.map(c=>c+'cc'), hoverBackgroundColor:cc, borderColor:cc, borderWidth:1, borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{min:0,max:5,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}},
+              x:{ticks:{font:{size:11}},grid:{display:false}}}}
+  });
+
+  new Chart(document.getElementById('dashSize'), {
+    type:'scatter',
+    data:{datasets:[{
+      data: PROBS.map(p=>({x:p.q, y:p.g, label:p.id})),
+      backgroundColor: PROBS.map(p=>TYPE_CFG[p.tp].c+'bb'),
+      borderColor: PROBS.map(p=>TYPE_CFG[p.tp].c),
+      borderWidth: 2,
+      pointRadius:8, pointHoverRadius:11,
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${PROBS[ctx.dataIndex].id}: ${ctx.raw.x} qubits, ${ctx.raw.y} gates`}}},
+      scales:{x:{title:{display:true,text:'Total Qubits',color:'#9ca3af',font:{size:12, weight:500}},ticks:{font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}},
+              y:{title:{display:true,text:'2-Qubit Gates',color:'#9ca3af',font:{size:12, weight:500}},ticks:{font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}}}}
+  });
+}
+
+// ─── Problems page ────────────────────────────────────────────────────────
+function buildProblems() {
+  const g = document.getElementById('probGrid');
+  PROBS.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'prob-card'; el.id = 'pgc-'+p.id;
+    el.onclick = () => selProb(p);
+    el.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px">
+        <div class="prob-id">${p.id}</div>
+        ${starStr(p.cf)}
+      </div>
+      <div class="prob-name">${p.name}</div>
+      <div class="prob-meta"><strong style="color:var(--text-main)">${p.q}</strong> Qubits &nbsp;&middot;&nbsp; <strong style="color:var(--text-main)">${p.g}</strong> Gates</div>
+      <div>${tag(p.tp)}</div>`;
+    g.appendChild(el);
+  });
+}
+
+function selProb(p) {
+  document.querySelectorAll('#probGrid .prob-card').forEach(c => c.classList.remove('active'));
+  const card = document.getElementById('pgc-'+p.id);
+  if (card) card.classList.add('active');
+  const det = document.getElementById('probDetail');
+  
+  // Re-trigger animation
+  det.classList.remove('detail-panel');
+  void det.offsetWidth;
+  det.classList.add('detail-panel');
+  
+  det.innerHTML = `
+<div class="detail-header">
+  <div style="display:flex; align-items:center; gap:16px; flex: 1;">
+    <span style="font-family:var(--font-mono);font-size:18px;font-weight:600;color:${CONF_COLORS[p.cf]}">${p.id}</span>
+    <span style="font-size:20px;font-weight:500;color:var(--text-main)">${p.name}</span>
+    ${tag(p.tp)}
+  </div>
+  <div style="text-align:right;">
+    <div style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono); margin-bottom:4px">${p.q}q &nbsp;&middot;&nbsp; ${p.g} Gates &nbsp;&middot;&nbsp; χ=${p.chi}</div>
+    ${starStr(p.cf)}
+  </div>
+</div>
+<div class="detail-body">
+  <div class="g2">
+    <div>
+      <div style="font-size:11px; font-weight:600; color:var(--text-faded); margin-bottom:8px; font-family:var(--font-mono); letter-spacing:0.1em">METHODOLOGY</div>
+      <div style="font-size:14px; color:var(--text-main); margin-bottom:24px; line-height: 1.7">${p.meth}</div>
+      <div style="font-size:11px; font-weight:600; color:var(--text-faded); margin-bottom:8px; font-family:var(--font-mono); letter-spacing:0.1em">PEAK BITSTRING (${p.ans.length} BITS)</div>
+      <div class="bitstr-wrap">${bitHtml(p.ans)}</div>
+      <div style="font-size:12px; color:var(--text-faded); margin-top:12px; display:flex; align-items:center; gap:8px;">
+        Reversed: <span style="font-family:var(--font-mono); color:var(--text-muted); background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:4px;">${p.ans.split('').reverse().join('')}</span>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px; font-weight:600; color:var(--text-faded); margin-bottom:8px; font-family:var(--font-mono); letter-spacing:0.1em">ANALYTICAL NOTES</div>
+      <div style="font-size:14px; color:var(--text-muted); line-height:1.75; background:var(--surface2); padding:16px; border-radius:12px; border:1px solid var(--border)">${p.note}</div>
+    </div>
+  </div>
+  <hr class="divider">
+  <div style="font-size:14px; color:var(--text-muted); line-height:1.8">${p.detail}</div>
+</div>`;
+}
+
+// ─── Method / Stepper ─────────────────────────────────────────────────────
+const STEPS = [
+  {num:'01', t:'Parse QASM & Fuse Gates',
+   sub:'Mathematically merging consecutive single-qubit gates before tensor simulation begins.',
+   body:`Every circuit starts as a raw text list of assembly (QASM) instructions. The very first optimization step merges consecutive single-qubit gates acting on the exact same qubit into a single 2×2 unitary matrix via standard matrix multiplication. We call this "gate fusion". This is mathematically exact and drastically reduces the number of heavy SVD operations required down the line.<br><br>
+<strong style="color:var(--text-main)">Example — P2 (Swift Rise):</strong> 2,100 isolated single-qubit RZ and SX gates logically collapse down to 420 dense U3 matrices—an immediate 5× speedup. Multi-qubit gates (like CZ, iSWAP, RZZ) act as solid boundaries where fusion must flush and stop.<br><br>
+The math: <code class="mono" style="color:var(--accent2)">U_fused = U_last · ... · U_2 · U_1</code> (Note the right-to-left product order, respecting quantum mechanics conventions).`,
+   svg:`<svg width="100%" viewBox="0 0 340 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="8" y="8" width="324" height="44" rx="8" fill="rgba(14, 165, 233, 0.08)" stroke="rgba(14, 165, 233, 0.3)" stroke-width="1"/>
+<text x="170" y="26" text-anchor="middle" font-size="11" fill="#38bdf8" font-family="monospace">rz(0.8) q[0]   sx q[0]   rz(1.2) q[0]   sx q[0]</text>
+<text x="170" y="44" text-anchor="middle" font-size="11" fill="#38bdf8" font-family="monospace">rz(0.4) q[0]   ...   cz q[0],q[1]</text>
+<text x="170" y="68" text-anchor="middle" font-size="10" font-weight="500" fill="#9ca3af">Mathematical Fusion — Exact Lossless 5× Speedup</text>
+<defs><marker id="m1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#6b7280" stroke-width="1.5"/></marker></defs>
+<line x1="170" y1="72" x2="170" y2="84" stroke="#6b7280" stroke-width="1.5" marker-end="url(#m1)"/>
+<rect x="16" y="86" width="138" height="28" rx="6" fill="rgba(16, 185, 129, 0.08)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1"/>
+<text x="85" y="103" text-anchor="middle" font-size="11" font-weight="600" fill="#34d399" font-family="monospace">U_fused q[0]  (1 op)</text>
+<rect x="186" y="86" width="138" height="28" rx="6" fill="rgba(239, 68, 68, 0.08)" stroke="rgba(239, 68, 68, 0.3)" stroke-width="1"/>
+<text x="255" y="103" text-anchor="middle" font-size="11" font-weight="600" fill="#f87171" font-family="monospace">cz q[0],q[1]</text>
+</svg>`},
+
+  {num:'02', t:'Initialize the MPS |00...0⟩ Chain',
+   sub:'Constructing the initial tensor chain with a neutral bond dimension of χ=1 across the board.',
+   body:`The global state of <code class="mono">n</code> qubits is mathematically modeled as a continuous chain of <code class="mono">n</code> tensors: A₁, A₂, ..., Aₙ. Every individual tensor takes the structural shape <code class="mono">(χ_left, 2, χ_right)</code>. That middle dimension of "2" represents the physical, observable state of the qubit (either |0⟩ or |1⟩). The system boots up into the pure <code class="mono">|00...0⟩</code> state, meaning all internal bond dimensions (χ) equal 1—signifying absolute zero entanglement.<br><br>
+<strong style="color:var(--text-main)">The Memory Advantage:</strong> When simulating at χ=64, all 10 challenge problems consume merely ~0.2 to 2 MB of RAM. Conversely, a brute-force exact statevector approach would mandate 2.1 GB just for P2, and an impossible 576 Petabytes for P9. MPS memory scaling is <code class="mono">O(n·χ²)</code>—beautifully linear with respect to qubit count.<br><br>
+As two-qubit gates strike the system and inject entanglement, the necessary bond dimension χ naturally inflates, forcing us to routinely trim it back using Singular Value Decomposition (SVD).`,
+   svg:`<svg width="100%" viewBox="0 0 340 108" fill="none" xmlns="http://www.w3.org/2000/svg">
+${[0,1,2,3,4].map(i=>`<rect x="${16+i*62}" y="26" width="48" height="42" rx="8" fill="rgba(139, 92, 246, 0.08)" stroke="rgba(139, 92, 246, 0.3)" stroke-width="1"/><text x="${40+i*62}" y="52" text-anchor="middle" font-size="14" font-weight="600" fill="#a78bfa" font-family="monospace">A${i+1}</text>${i<4?`<line x1="${64+i*62}" y1="47" x2="${78+i*62}" y2="47" stroke="#38bdf8" stroke-width="3" opacity=".7"/><text x="${71+i*62}" y="41" text-anchor="middle" font-size="9" fill="#38bdf8" font-family="monospace">χ=1</text>`:''}<line x1="${40+i*62}" y1="68" x2="${40+i*62}" y2="86" stroke="#34d399" stroke-width="2"/><text x="${40+i*62}" y="98" text-anchor="middle" font-size="9" font-weight="600" fill="#34d399" font-family="monospace">dim 2</text>`).join('')}
+</svg>`},
+
+  {num:'03', t:'Gate Application & SVD Truncation',
+   sub:'The cycle of tensor contraction, matrix application, and lossy SVD decomposition.',
+   body:`When a two-qubit gate hits sites <code class="mono">(k, k+1)</code>, the engine performs a precise 4-step dance:<br><br>
+<ol style="margin-left:20px; color:var(--text-muted); line-height:1.7;">
+  <li style="margin-bottom:8px"><strong style="color:var(--text-main)">Contract:</strong> Merge the neighboring tensors Aₖ and Aₖ₊₁ into a singular massive matrix Θ shaped <code class="mono">(χ·2, 2·χ)</code>.</li>
+  <li style="margin-bottom:8px"><strong style="color:var(--text-main)">Apply:</strong> Perform the matrix multiplication <code class="mono">G · Θ</code> directly targeting the two physical qubit indices.</li>
+  <li style="margin-bottom:8px"><strong style="color:var(--text-main)">Decompose:</strong> Rip the matrix back apart using SVD: <code class="mono">G·Θ = U · diag(σ₁, σ₂, ...) · Vᵀ</code></li>
+  <li style="margin-bottom:8px"><strong style="color:var(--text-main)">Truncate (The Catch):</strong> We only retain the top <code class="mono">χ_max</code> singular values, discarding the rest to save memory.</li>
+</ol><br>
+The mathematical damage done by this truncation is calculated as <code class="mono" style="color:var(--accent3)">ε = Σ σₖ² (for all k > χ)</code>. For elegant topologies like rings or heavy-hex grids, this error ε is infinitesimally small. For chaotic all-to-all topologies, this error balloons, forcing us to run cross-validation against multiple χ ceilings.`,
+   svg:`<svg width="100%" viewBox="0 0 340 152" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="8" y="12" width="56" height="46" rx="6" fill="rgba(139, 92, 246, 0.08)" stroke="rgba(139, 92, 246, 0.4)" stroke-width="1"/><text x="36" y="39" text-anchor="middle" font-size="13" font-weight="600" fill="#a78bfa" font-family="monospace">Aₖ</text>
+<rect x="82" y="12" width="56" height="46" rx="6" fill="rgba(139, 92, 246, 0.08)" stroke="rgba(139, 92, 246, 0.4)" stroke-width="1"/><text x="110" y="39" text-anchor="middle" font-size="13" font-weight="600" fill="#a78bfa" font-family="monospace">Aₖ₊₁</text>
+<line x1="64" y1="35" x2="82" y2="35" stroke="#38bdf8" stroke-width="3" opacity=".7"/>
+<text x="73" y="29" text-anchor="middle" font-size="10" font-weight="600" fill="#38bdf8" font-family="monospace">χ</text>
+<defs><marker id="m2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#6b7280" stroke-width="1.5"/></marker></defs>
+<text x="178" y="34" text-anchor="middle" font-size="11" font-weight="500" fill="#9ca3af">Contract + Apply G</text>
+<line x1="150" y1="35" x2="195" y2="35" stroke="#6b7280" stroke-width="1.5" marker-end="url(#m2)"/>
+<rect x="198" y="12" width="56" height="46" rx="6" fill="rgba(239, 68, 68, 0.08)" stroke="rgba(239, 68, 68, 0.4)" stroke-width="1"/><text x="226" y="39" text-anchor="middle" font-size="13" font-weight="600" fill="#f87171" font-family="monospace">G·Θ</text>
+<text x="170" y="82" text-anchor="middle" font-size="11" font-family="monospace" fill="#e5e7eb">SVD: U · diag(σ₁,σ₂,...) · Vᵀ</text>
+<text x="170" y="96" text-anchor="middle" font-size="11" fill="#9ca3af">Sever trailing singular values</text>
+<text x="170" y="112" text-anchor="middle" font-size="11" font-weight="600" fill="#fbbf24" font-family="monospace">ε = Σ σₖ² (k &gt; χ)  ←  Truncation Error</text>
+<rect x="8" y="120" width="56" height="32" rx="6" fill="rgba(16, 185, 129, 0.08)" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1"/><text x="36" y="140" text-anchor="middle" font-size="13" font-weight="600" fill="#34d399" font-family="monospace">Aₖ'</text>
+<rect x="82" y="120" width="56" height="32" rx="6" fill="rgba(16, 185, 129, 0.08)" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1"/><text x="110" y="140" text-anchor="middle" font-size="13" font-weight="600" fill="#34d399" font-family="monospace">Aₖ₊₁'</text>
+<line x1="64" y1="136" x2="82" y2="136" stroke="#38bdf8" stroke-width="3" opacity=".7"/>
+<text x="73" y="130" text-anchor="middle" font-size="10" font-weight="600" fill="#38bdf8" font-family="monospace">χ_new</text>
+</svg>`},
+
+  {num:'04', t:'Bidirectional Beam Search Extraction',
+   sub:'Decoding the probability peak from both chain extremities to ensure bulletproof validation.',
+   body:`A classic beam search crawls qubit-by-qubit, retaining only the Top-W most probable partial sequences ("beams") at any given step. Each beam continuously updates its running log-probability and maintains a boundary vector to allow fast, localized tensor contraction.<br><br>
+<strong style="color:var(--text-main)">Why run it bidirectionally?</strong> A standard Left-to-Right sweep makes greedy, irreversible decisions at site 0 without possessing any foresight regarding the state of site n-1. By completely decoupling the process and independently running a Right-to-Left pass, we can intersect the final Top-50 candidates. This yields a mathematically self-validating answer without the need to rerun expensive simulations.<br><br>
+When <code class="mono" style="color:var(--accent)">peak_LR == peak_RL</code> under a massive search width like W=1000, we possess extreme statistical confidence that the algorithm did not get trapped in a local minimum. For P7, 43 out of 50 candidates matched flawlessly.`,
+   svg:`<svg width="100%" viewBox="0 0 340 116" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="8" y="10" width="324" height="26" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+<rect x="8" y="10" width="132" height="26" rx="6" fill="rgba(14, 165, 233, 0.1)" stroke="rgba(14, 165, 233, 0.4)" stroke-width="1"/>
+<text x="74" y="27" text-anchor="middle" font-size="11" font-weight="600" fill="#38bdf8" font-family="monospace">L→R Scan (W=1000)</text>
+<rect x="200" y="10" width="132" height="26" rx="6" fill="rgba(239, 68, 68, 0.1)" stroke="rgba(239, 68, 68, 0.4)" stroke-width="1"/>
+<text x="266" y="27" text-anchor="middle" font-size="11" font-weight="600" fill="#f87171" font-family="monospace">R→L Scan (W=1000)</text>
+<rect x="140" y="6" width="60" height="34" rx="8" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.6)" stroke-width="1.5"/>
+<text x="170" y="29" text-anchor="middle" font-size="20" font-weight="600" fill="#34d399">∩</text>
+<line x1="74" y1="36" x2="74" y2="54" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="3,3"/>
+<line x1="170" y1="40" x2="170" y2="54" stroke="#34d399" stroke-width="2"/>
+<line x1="266" y1="36" x2="266" y2="54" stroke="#f87171" stroke-width="1.5" stroke-dasharray="3,3"/>
+<rect x="8" y="54" width="124" height="28" rx="6" fill="rgba(14, 165, 233, 0.05)" stroke="rgba(14, 165, 233, 0.2)" stroke-width="1"/>
+<text x="70" y="71" text-anchor="middle" font-size="11" fill="#38bdf8" font-family="monospace">pk_lr = 011000...</text>
+<rect x="140" y="54" width="60" height="28" rx="6" fill="rgba(16, 185, 129, 0.05)" stroke="rgba(16, 185, 129, 0.3)" stroke-width="1"/>
+<text x="170" y="72" text-anchor="middle" font-size="11" font-weight="600" fill="#34d399">Top-50</text>
+<rect x="208" y="54" width="124" height="28" rx="6" fill="rgba(239, 68, 68, 0.05)" stroke="rgba(239, 68, 68, 0.2)" stroke-width="1"/>
+<text x="270" y="71" text-anchor="middle" font-size="11" fill="#f87171" font-family="monospace">pk_rl = 011000...</text>
+<text x="170" y="102" text-anchor="middle" font-size="12" font-weight="600" fill="#34d399">pk_lr == pk_rl  →  Maximum Confidence</text>
+</svg>`},
+
+  {num:'05', t:'Perturbation Stress Test',
+   sub:'Inverting individual bits to physically confirm the string is a strict local maximum.',
+   body:`Once the dual beam search identifies the prime candidate bitstring <code class="mono">x*</code>, we execute a brute-force stress test. We programmatically flip each of the <code class="mono">n</code> bits (0 to 1, or 1 to 0) exactly once, calculating the resulting log-probability against the tensor state. If any single mutation improves the logP score, we immediately adopt that improved state and restart the sweep. We cycle this until no single-bit alteration can yield a better score.<br><br>
+A bitstring that survives this gauntlet is proven to be a <strong style="color:var(--accent)">strict local maximum</strong> within the context of the MPS approximation. While this alone does not guarantee a global maximum, coupling it with identical LR=RL beam traces produces a near-indisputable result.<br><br>
+<strong style="color:var(--text-main)">Results:</strong> For P7, literally all 45 manual bit flips resulted in a lower score. For the massive P6 circuit, the perturbation protocol actually uncovered a single one-bit improvement immediately after the beam scan, before locking into equilibrium.`,
+   svg:`<svg width="100%" viewBox="0 0 340 138" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="96" y="8" width="148" height="42" rx="8" fill="rgba(245, 158, 11, 0.1)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1"/>
+<text x="170" y="26" text-anchor="middle" font-size="13" font-weight="600" fill="#fbbf24" font-family="monospace">x* = 011000111...</text>
+<text x="170" y="42" text-anchor="middle" font-size="11" fill="#fcd34d" font-family="monospace">logP = −86.7554</text>
+<text x="170" y="66" text-anchor="middle" font-size="11" font-style="italic" fill="#9ca3af">Evaluate logic flipping bit i ∈ {0, 1, …, n−1}</text>
+<rect x="8" y="78" width="86" height="38" rx="6" fill="rgba(239, 68, 68, 0.08)" stroke="rgba(239, 68, 68, 0.3)" stroke-width="1"/>
+<text x="51" y="94" text-anchor="middle" font-size="11" fill="#fca5a5" font-family="monospace">Flip Bit 0</text>
+<text x="51" y="108" text-anchor="middle" font-size="11" font-weight="600" fill="#f87171" font-family="monospace">−89.1 ↓</text>
+<rect x="127" y="78" width="86" height="38" rx="6" fill="rgba(239, 68, 68, 0.08)" stroke="rgba(239, 68, 68, 0.3)" stroke-width="1"/>
+<text x="170" y="94" text-anchor="middle" font-size="11" fill="#fca5a5" font-family="monospace">Flip Bit K</text>
+<text x="170" y="108" text-anchor="middle" font-size="11" font-weight="600" fill="#f87171" font-family="monospace">−91.2 ↓</text>
+<rect x="246" y="78" width="86" height="38" rx="6" fill="rgba(239, 68, 68, 0.08)" stroke="rgba(239, 68, 68, 0.3)" stroke-width="1"/>
+<text x="289" y="94" text-anchor="middle" font-size="11" fill="#fca5a5" font-family="monospace">Flip Bit N−1</text>
+<text x="289" y="108" text-anchor="middle" font-size="11" font-weight="600" fill="#f87171" font-family="monospace">−88.3 ↓</text>
+<text x="170" y="132" text-anchor="middle" font-size="12" font-weight="600" fill="#34d399">All N iterations failed to improve → LOCAL MAX ✓</text>
+</svg>`},
+];
+
+let curStep = 0;
+function buildMethod() {
+  const nav = document.getElementById('stepNav');
+  STEPS.forEach((s,i) => {
+    const d = document.createElement('span');
+    d.className = 'step-dot' + (i===0?' on':'');
+    d.onclick = () => gotoStep(i);
+    nav.appendChild(d);
+  });
+  const prev = document.createElement('button');
+  prev.className = 'btn'; prev.innerHTML = '&larr; Prev';
+  prev.style.marginLeft = '16px';
+  prev.onclick = () => gotoStep(curStep-1);
+  nav.appendChild(prev);
+  const next = document.createElement('button');
+  next.className = 'btn btn-accent'; next.innerHTML = 'Next &rarr;';
+  next.style.marginLeft = '8px';
+  next.onclick = () => gotoStep(curStep+1);
+  nav.appendChild(next);
+  renderStep(0);
+
+  const labels = PROBS.map(p=>p.id);
+  const exMB = PROBS.map(p => 8*Math.pow(2,p.q)/1e6);
+  const mpsMB = PROBS.map(p => { const x=p.chi==='-'?1:parseInt(p.chi)||24; return 8*p.q*x*x/1e6; });
+  const fmt = v => v>=1e12?(v/1e12).toFixed(0)+' EB':v>=1e9?(v/1e9).toFixed(0)+' PB':v>=1e6?(v/1e6).toFixed(0)+' TB':v>=1e3?(v/1e3).toFixed(0)+' GB':v>=1?v.toFixed(0)+' MB':'<1 MB';
+  
+  new Chart(document.getElementById('methodMem'), {
+    type:'bar',
+    data:{labels, datasets:[
+      {label:'MPS Architecture',data:mpsMB,backgroundColor:'rgba(16, 185, 129, 0.4)',borderColor:'#10b981',borderWidth:1,borderRadius:4},
+      {label:'Brute-Force Exact',data:exMB,backgroundColor:'rgba(239, 68, 68, 0.25)',borderColor:'#ef4444',borderWidth:1,borderRadius:4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#9ca3af', font:{size:11}}}},
+      scales:{y:{type:'logarithmic',ticks:{font:{size:11},callback:fmt},grid:{color:'rgba(255,255,255,0.04)'}},
+              x:{ticks:{font:{size:11}},grid:{display:false}}}}
+  });
+
+  const fv = document.getElementById('fusionViz');
+  fv.innerHTML = [
+    {label:'P2 Swift Rise',before:2100,after:420,ratio:'5×'},
+    {label:'P3 Sharp Peak',before:1860,after:372,ratio:'5×'},
+    {label:'P7 Heavy Hex',before:3840,after:768,ratio:'5×'},
+    {label:'P9 HQAP',before:3890,after:778,ratio:'5×'},
+  ].map(d => `
+<div style="margin-bottom:16px">
+  <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--text-main);margin-bottom:8px">
+    <span>${d.label}</span><span style="font-family:var(--font-mono);color:var(--accent)">${d.ratio} Gain</span>
+  </div>
+  <div style="margin-bottom:6px">
+    <div style="font-size:11px;color:var(--text-faded);margin-bottom:4px;display:flex;justify-content:space-between"><span>Raw Instructions</span><span>${d.before}</span></div>
+    <div style="height:6px;border-radius:3px;background:rgba(239, 68, 68, 0.15);width:100%;position:relative"><div style="height:100%;border-radius:3px;background:var(--danger);width:100%"></div></div>
+  </div>
+  <div>
+    <div style="font-size:11px;color:var(--text-faded);margin-bottom:4px;display:flex;justify-content:space-between"><span>Post-Fusion Matrices</span><span>${d.after}</span></div>
+    <div style="height:6px;border-radius:3px;background:rgba(16, 185, 129, 0.15)"><div style="height:100%;border-radius:3px;background:var(--accent);width:20%"></div></div>
+  </div>
+</div>`).join('');
+}
+
+function gotoStep(i) {
+  curStep = Math.max(0, Math.min(STEPS.length-1, i));
+  document.querySelectorAll('#stepNav .step-dot').forEach((d,j) => {
+    if(j===curStep) d.classList.add('on');
+    else d.classList.remove('on');
+  });
+  renderStep(curStep);
+}
+
+function renderStep(i) {
+  const s = STEPS[i];
+  const view = document.getElementById('stepView');
+  view.innerHTML = `
+<div class="step-card" style="opacity:0; animation:fadeIn 0.3s forwards;">
+  <div style="padding:24px 32px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.01);">
+    <div class="step-num">STAGE ${s.num} / 05</div>
+    <div class="step-title">${s.t}</div>
+    <div style="font-size:14.5px;color:var(--text-muted)">${s.sub}</div>
+  </div>
+  <div style="padding:32px" class="g2">
+    <div class="step-desc">${s.body}</div>
+    <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:20px; display:flex; align-items:center; box-shadow:inset 0 2px 12px rgba(0,0,0,0.4)">${s.svg}</div>
+  </div>
+</div>`;
+}
+
+// ─── Topology ─────────────────────────────────────────────────────────────
+function buildTopology() {
+  const tc = document.getElementById('topoCompare');
+  const rows = [
+    {tp:'ring',label:'Ring Configuration (P2, P3, P4)',law:'S ≤ 2·const',reason:'Maximum 2 cut edges possible',chi:'64 – 256',exact:true},
+    {tp:'hex',label:'IBM Heavy Hex (P7, P10)',law:'S ≤ 3·const',reason:'Degree 2.1; pseudo-linear chain',chi:'48 – 64',exact:true},
+    {tp:'grid',label:'Google Willow Grid (P8)',law:'S ∝ √n',reason:'2D area law strict bounding',chi:'80',exact:false},
+    {tp:'all',label:'Dense All-to-All (P5, P6, P9)',law:'S ∝ n/2',reason:'Unrestricted global entanglement',chi:'2²⁸ (Intractable)',exact:false},
+  ];
+  tc.innerHTML = rows.map(r => {
+    const c = TYPE_CFG[r.tp].c;
+    return `
+<div style="padding:16px; border-radius:10px; background:var(--surface2); border:1px solid ${c}40; border-left: 4px solid ${c}; margin-bottom:12px; box-shadow:var(--shadow-sm);">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <span style="font-size:13.5px;font-weight:600;color:${c}">${r.label}</span>
+    <span style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:${r.exact?'var(--accent)':'var(--accent3)'}">${r.chi}</span>
+  </div>
+  <div style="font-size:12.5px;color:var(--text-muted)">
+    <code class="mono" style="color:var(--text-main); font-size:11px; padding:2px 6px; background:rgba(255,255,255,0.05); border-radius:4px; margin-right:6px">${r.law}</code> 
+    ${r.reason}
+  </div>
+</div>`;
+  }).join('');
+
+  new Chart(document.getElementById('topoChart'), {
+    type:'bar',
+    data:{
+      labels:['Ring Topology\n(P2-P4)','Heavy Hex\n(P7, P10)','Willow Grid\n(P8)','All-to-All\n(P5, P6, P9)'],
+      datasets:[{
+        data:[256, 64, 80, 268435456],
+        backgroundColor:['rgba(16, 185, 129, 0.2)','rgba(14, 165, 233, 0.2)','rgba(245, 158, 11, 0.2)','rgba(239, 68, 68, 0.2)'],
+        borderColor:['#10b981','#0ea5e9','#f59e0b','#ef4444'],
+        borderWidth:1, borderRadius:6
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{type:'logarithmic',title:{display:true,text:'Minimum χ for Exact State Simulation',color:'#9ca3af',font:{size:11}},ticks:{font:{size:11},callback:v=>v>=1e6?(v/1e6)+'M':v>=1e3?(v/1e3)+'K':v},grid:{color:'rgba(255,255,255,0.04)'}},
+              x:{ticks:{font:{size:11}},grid:{display:false}}}}
+  });
+
+  const tc2 = document.getElementById('topoCards');
+  [
+    {tp:'ring',probs:'P2, P3, P4',desc:'Every single qubit is permanently bonded to exactly 2 neighbors. The critical ring closure gate (e.g. CZ(0,43) for P3) must be digitally routed via SWAP chains. Because any geometric bipartition cuts only 2 edges, Entanglement Entropy (S) is strictly bounded.'},
+    {tp:'hex',probs:'P7, P10',desc:'Engineered by IBM explicitly for quantum error suppression. It boasts a sparse average degree of 2.1, meaning most qubits are just passthroughs. Topologically, it behaves nearly identically to a 1D chain, making low-χ MPS simulations essentially flawless.'},
+    {tp:'grid',probs:'P8',desc:'The Google Willow architecture utilizes a 2D square lattice with native iSWAP gates—the perfect playground for compiling surface codes. It adheres to the 2D area law, where S scales with the perimeter (√n). χ=80 handles 40 qubits beautifully, but larger grids will fail.'},
+    {tp:'all',probs:'P5, P6, P9',desc:'Virtually every qubit physically interacts with every other, mimicking trapped-ion processors like IonQ or Quantinuum. Entanglement explodes as fast as S ∝ n/2. Exact simulation mandates χ ≈ 2^(n/2), rendering classical math physically impossible for n=56.'},
+  ].forEach(d => {
+    const c = TYPE_CFG[d.tp].c;
+    const div = document.createElement('div');
+    div.className = 'card-sm';
+    div.innerHTML = `
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:12px">
+  ${tag(d.tp)}
+  <span style="font-size:12px; font-weight:600; color:var(--text-faded); font-family:var(--font-mono)">${d.probs}</span>
+</div>
+<div class="topo-svg-wrap">${makeTopoSVG(d.tp, c)}</div>
+<div style="font-size:13.5px;color:var(--text-muted);line-height:1.7">${d.desc}</div>`;
+    tc2.appendChild(div);
+  });
+}
+
+function makeTopoSVG(type, c) {
+  let lines='', nodes='';
+  if (type==='ring') {
+    const N=14, R=60, cx=90, cy=70, pts=[];
+    for(let i=0;i<N;i++){const a=i/N*2*Math.PI-Math.PI/2;pts.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]);}
+    for(let i=0;i<N;i++){const j=(i+1)%N;lines+=`<line x1="${pts[i][0].toFixed(1)}" y1="${pts[i][1].toFixed(1)}" x2="${pts[j][0].toFixed(1)}" y2="${pts[j][1].toFixed(1)}" stroke="${c}" stroke-width="1.5" opacity=".4"/>`;}
+    pts.forEach(p=>{nodes+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="6" fill="${c}22" stroke="${c}" stroke-width="1.5"/>`;});
+    return `<svg width="180" height="140" viewBox="0 0 180 140">${lines}${nodes}</svg>`;
+  }
+  if (type==='hex') {
+    const dp=[[30,20],[75,20],[120,20],[30,90],[75,90],[120,90]];
+    const bp=[[52,56],[97,56]];
+    const al=[...dp,...bp];
+    [[0,1],[1,2],[3,4],[4,5],[0,3],[1,6],[6,4],[2,7],[7,5]].forEach(([a,b])=>{
+      lines+=`<line x1="${al[a][0]}" y1="${al[a][1]}" x2="${al[b][0]}" y2="${al[b][1]}" stroke="${c}" stroke-width="1.5" opacity=".4"/>`;
+    });
+    dp.forEach(p=>{nodes+=`<circle cx="${p[0]}" cy="${p[1]}" r="8" fill="${c}22" stroke="${c}" stroke-width="1.5"/>`;});
+    bp.forEach(p=>{nodes+=`<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="${c}22" stroke="${c}" stroke-width="1" opacity=".8"/>`;});
+    return `<svg width="150" height="110" viewBox="0 0 150 110">${lines}${nodes}</svg>`;
+  }
+  if (type==='grid') {
+    const pts=[];
+    for(let r=0;r<4;r++) for(let cc=0;cc<5;cc++) pts.push([12+cc*32,14+r*36]);
+    for(let r=0;r<4;r++) for(let cc=0;cc<5;cc++){const i=r*5+cc;
+      if(cc<4)lines+=`<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${pts[i+1][0]}" y2="${pts[i+1][1]}" stroke="${c}" stroke-width="1.5" opacity=".4"/>`;
+      if(r<3)lines+=`<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${pts[i+5][0]}" y2="${pts[i+5][1]}" stroke="${c}" stroke-width="1.5" opacity=".4"/>`;}
+    pts.forEach(p=>{nodes+=`<circle cx="${p[0]}" cy="${p[1]}" r="7" fill="${c}22" stroke="${c}" stroke-width="1.5"/>`;});
+    return `<svg width="180" height="140" viewBox="0 0 180 140">${lines}${nodes}</svg>`;
+  }
+  
+  const N=10,R=58,cx=90,cy=68,pts=[];
+  for(let i=0;i<N;i++){const a=i/N*2*Math.PI-Math.PI/2;pts.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]);}
+  let seed=42;const rand=()=>{seed=seed*1664525+1013904223&0xffffffff;return(seed>>>0)/4294967296;};
+  for(let i=0;i<N;i++) for(let j=i+1;j<N;j++) if(rand()<0.65)
+    lines+=`<line x1="${pts[i][0].toFixed(1)}" y1="${pts[i][1].toFixed(1)}" x2="${pts[j][0].toFixed(1)}" y2="${pts[j][1].toFixed(1)}" stroke="${c}" stroke-width="1" opacity=".2"/>`;
+  pts.forEach(p=>{nodes+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="7" fill="${c}22" stroke="${c}" stroke-width="1.5"/>`;});
+  return `<svg width="180" height="140" viewBox="0 0 180 140">${lines}${nodes}</svg>`;
+}
+
+// ─── Convergence ──────────────────────────────────────────────────────────
+function buildConvergence() {
+  new Chart(document.getElementById('chiChart'), {
+    type:'line',
+    data:{
+      labels:['χ=16','χ=24','χ=32','χ=48','χ=64','χ=80'],
+      datasets:[
+        {data:[-393.4,-301.7,null,null,null,null],borderColor:'#ef4444',backgroundColor:'#ef4444',pointStyle:'circle',borderWidth:3,tension:0,spanGaps:false,pointRadius:6,pointHoverRadius:9},
+        {data:[null,null,-323.2,-302.5,null,null],borderColor:'#0ea5e9',backgroundColor:'#0ea5e9',pointStyle:'rect',borderWidth:3,tension:0,spanGaps:false,pointRadius:6,pointHoverRadius:9,borderDash:[6,4]},
+        {data:[null,null,null,null,-113.3,-101.2],borderColor:'#f59e0b',backgroundColor:'#f59e0b',pointStyle:'triangle',borderWidth:3,tension:0,spanGaps:false,pointRadius:7,pointHoverRadius:10},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{title:{display:true,text:'Log Probability P(x*)',color:'#9ca3af',font:{size:11}},ticks:{font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}},
+              x:{ticks:{font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}}}}
+  });
+
+  const ce = document.getElementById('convEvents');
+  [{p:'P6 Titan Pinnacle',from:'χ=16',to:'χ=24',d:'+91.65 nats',note:'The answer generated by χ=16 is mathematically 10^39.8 times less probable under the refined χ=24 framework.',c:'var(--danger)'},
+   {p:'P10 Heavy Hex',from:'χ=32',to:'χ=48',d:'+20.7 nats',note:'At χ=32, wave collapse occurs. It shares only 18 out of 49 bits with the verified correct χ=48 sequence.',c:'var(--accent2)'},
+   {p:'P8 Grid iSwap',from:'χ=64',to:'χ=80',d:'+8.1 nats',note:'Simulating at χ=64 completely misses the prime peak, outputting an almost unrelated bitstring sequence.',c:'var(--accent3)'},
+  ].forEach(e => {
+    const d = document.createElement('div');
+    d.className = 'card-xs'; d.style.marginBottom = '12px'; d.style.borderLeft = `3px solid ${e.c}`;
+    d.innerHTML = `
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+  <span style="font-family:var(--font-mono);font-size:13.5px;font-weight:600;color:${e.c}">${e.p}</span>
+  <span style="font-size:11.5px;color:var(--text-faded);background:rgba(255,255,255,0.04);padding:2px 8px;border-radius:4px">${e.from} &rarr; ${e.to}</span>
+  <span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--text-main);background:rgba(16, 185, 129, 0.15);padding:2px 8px;border-radius:4px;margin-left:auto;border:1px solid rgba(16, 185, 129, 0.3)">${e.d}</span>
+</div>
+<div style="font-size:12.5px;color:var(--text-muted);line-height:1.6">${e.note}</div>`;
+    ce.appendChild(d);
+  });
+
+  const vc = document.getElementById('valChecks');
+  [{t:'Beam LR = RL',c:'var(--accent)',d:'Both independent directional beam searches naturally converge on the exact same Top-1 bitstring. The strongest form of self-validation.'},
+   {t:'Common Top-50',c:'var(--accent2)',d:'A massive overlap percentage in the runner-up candidates proves the algorithm has successfully isolated the true probability basin.'},
+   {t:'Perturbation Max',c:'var(--accent3)',d:'Every single manual bit flip actively harms the logP score, confirming the candidate is a strict local maximum under the MPS.'},
+   {t:'Cross-χ Integrity',c:'var(--danger)',d:'The selected peak unequivocally scores the highest probability under the most computationally heavy (highest-χ) simulation.'},
+  ].forEach(v => {
+    const d = document.createElement('div');
+    d.className = 'card-xs';
+    d.innerHTML = `
+<div style="font-size:13px;font-weight:600;color:${v.c};margin-bottom:8px;font-family:var(--font-mono);letter-spacing:0.05em">${v.t}</div>
+<div style="font-size:12px;color:var(--text-muted);line-height:1.7">${v.d}</div>`;
+    vc.appendChild(d);
+  });
+}
+
+// ─── Answers ──────────────────────────────────────────────────────────────
+function buildAnswers() {
+  const al = document.getElementById('answerList');
+  PROBS.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'ans-row';
+    row.onclick = () => selAnswer(p);
+    row.innerHTML = `
+<div class="ans-pid">${p.id}</div>
+<div style="flex:1;min-width:0">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+    <span style="font-size:14px;font-weight:500;color:var(--text-main)">${p.name}</span>
+    ${tag(p.tp)}
+    <span style="font-size:12px;color:var(--text-faded);font-family:var(--font-mono);margin-left:auto">${p.q}q &nbsp;&middot;&nbsp; χ=${p.chi}</span>
+  </div>
+  <div style="margin-bottom:8px;">${bitHtml(p.ans)}</div>
+  <div class="prog-bar" style="width:${Math.min(p.cf/5*100,100)}%"><div class="prog-fill" style="width:100%;background:${CONF_COLORS[p.cf]}"></div></div>
+</div>`;
+    al.appendChild(row);
+  });
+}
+
+function selAnswer(p) {
+  const det = document.getElementById('ansDetail');
+  
+  det.classList.remove('detail-panel');
+  void det.offsetWidth; 
+  det.classList.add('detail-panel');
+  
+  det.innerHTML = `
+<div class="detail-header" style="background:var(--surface2)">
+  <span style="font-family:var(--font-mono);font-size:18px;font-weight:600;color:${CONF_COLORS[p.cf]}">${p.id}</span>
+  <span style="font-size:18px;font-weight:500;color:var(--text-main)">${p.name}</span>
+  <span style="margin-left:8px">${tag(p.tp)}</span>
+  <span style="margin-left:auto">${starStr(p.cf)}</span>
+</div>
+<div class="detail-body">
+  <div class="g2">
+    <div style="background:var(--bg); border:1px solid var(--border); padding:20px; border-radius:12px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-faded);font-family:var(--font-mono);letter-spacing:0.1em;margin-bottom:8px">STANDARD FORWARD (q[0] … q[n−1])</div>
+      <div class="bitstr-wrap" style="margin:0 0 20px 0; border:none; background:transparent; padding:0">${bitHtml(p.ans)}</div>
+      
+      <div style="font-size:11px;font-weight:600;color:var(--text-faded);font-family:var(--font-mono);letter-spacing:0.1em;margin-bottom:8px">QISKIT REVERSED (q[n−1] … q[0])</div>
+      <div class="bitstr-wrap" style="margin:0; border:none; background:transparent; padding:0">${bitHtml(p.ans.split('').reverse().join(''))}</div>
+      <div style="font-size:12px;color:var(--text-faded);margin-top:16px;font-style:italic">Both binary orderings are technically valid for final verification.</div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:600;color:var(--text-faded);font-family:var(--font-mono);letter-spacing:0.1em;margin-bottom:8px">SIMULATION METHOD</div>
+      <div style="font-size:14px;color:var(--text-main);margin-bottom:24px;line-height:1.7">${p.meth}</div>
+      <div style="font-size:11px;font-weight:600;color:var(--text-faded);font-family:var(--font-mono);letter-spacing:0.1em;margin-bottom:8px">ARCHITECTURAL DETAILS</div>
+      <div style="font-size:13.5px;color:var(--text-muted);line-height:1.75">${p.note}</div>
+    </div>
+  </div>
+</div>`;
+  det.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ─── Individual problem pages ────────────────────────────────────────────
+function buildProbPages() {
+  const container = document.getElementById('probPages');
+  PROBS.forEach(p => {
+    const t = TYPE_CFG[p.tp];
+    const page = document.createElement('div');
+    page.className = 'page';
+    page.id = 'page-prob-'+p.id;
+    const stageLabel = ['','Exact Statevector Processing','Pure MPS Simulation','Lossy MPS + Cross-χ Validation'][p.stage];
+    page.innerHTML = `
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
+  <span class="page-label" style="margin:0; font-size:13px">${p.id}</span>
+  ${tag(p.tp)}
+  <span style="font-size:12px;font-weight:500;color:var(--text-faded);font-family:var(--font-mono);margin-left:auto;background:rgba(255,255,255,0.05);padding:4px 10px;border-radius:6px">Stage ${p.stage} Protocol: ${stageLabel}</span>
+</div>
+<h1 style="font-size:40px; font-weight:500; margin-bottom:16px">${p.name}</h1>
+<p class="subtitle" style="font-size:16px; margin-bottom:32px; color:var(--text-main)">${p.meth}</p>
+
+<div class="g3" style="margin-bottom:32px">
+  <div class="card-sm"><div style="font-size:12px;font-weight:600;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:8px">Total Qubits</div><div style="font-size:36px;font-weight:300;font-family:var(--font-mono);color:${t.c}">${p.q}</div></div>
+  <div class="card-sm"><div style="font-size:12px;font-weight:600;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:8px">2Q Gate Count</div><div style="font-size:36px;font-weight:300;font-family:var(--font-mono);color:${t.c}">${p.g}</div></div>
+  <div class="card-sm"><div style="font-size:12px;font-weight:600;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:8px">Confidence</div><div style="margin-top:12px">${starStr(p.cf, t.c)}</div></div>
+</div>
+
+${p.id==='P9' ? `
+<div class="warn-box" style="margin-bottom:24px; border:1px solid rgba(239, 68, 68, 0.4); background:rgba(239, 68, 68, 0.15)">
+  <div><strong style="color:#f87171; display:block; margin-bottom:6px; font-size:14px">CRITICAL FAILURE WARNING:</strong> Classic Ising Simulated Annealing definitively fails here, aggressively returning a false-positive <code class="mono">111...1</code> ground state. SA structurally ignores the 3,890 single-qubit U gates driving the quantum interference. Full dense simulation is mandatory.</div>
+</div>` : ''}
+
+<div class="g2" style="margin-bottom:32px">
+  <div class="card">
+    <h3 style="margin-bottom: 24px;">Extracted Peak Bitstring</h3>
+    <div style="font-size:11px;font-weight:600;color:var(--text-faded);font-family:var(--font-mono);letter-spacing:0.1em;margin-bottom:8px">FORWARD — MPS NATIVE ORDER (q[0] … q[n−1])</div>
+    <div class="bitstr-wrap" style="margin-bottom:24px">${bitHtml(p.ans)}</div>
+    
+    <div style="font-size:11px;font-weight:600;color:var(--text-faded);font-family:var(--font-mono);letter-spacing:0.1em;margin-bottom:8px">REVERSED — IBM QISKIT STANDARD (q[n−1] … q[0])</div>
+    <div class="bitstr-wrap">${bitHtml(p.ans.split('').reverse().join(''))}</div>
+  </div>
+  <div class="card">
+    <h3 style="margin-bottom: 24px;">Graph Architecture</h3>
+    <div class="topo-svg-wrap">${makeTopoSVG(p.tp, t.c)}</div>
+    <div style="font-size:13.5px;color:var(--text-muted);text-align:center;font-weight:500;margin-top:20px">${t.l} Framework &nbsp;&middot;&nbsp; ${p.q} Qubits</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-bottom: 24px; font-size: 18px">Deep Analytical Breakdown</h3>
+  <div style="font-size:14.5px;color:var(--text-muted);line-height:1.9" class="detail-body">${p.detail}</div>
+</div>`;
+    container.appendChild(page);
+  });
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────
+buildSidebar();
+buildMobileNav();
+buildDashboard();
+buildProblems();
+buildMethod();
+buildTopology();
+buildConvergence();
+buildAnswers();
+buildProbPages();
+
+</script>
+</body>
+</html>
